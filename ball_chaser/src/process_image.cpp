@@ -37,16 +37,19 @@ void process_image_callback(const sensor_msgs::Image img)
 	bool white_ball =false;
         int white_pixel = 255;
 
-	for (int i = 0; i <  img.step; i++){
-		for (int j = 1; j < img.height; j++) {
-			if (img.data[j+(img.height*i)] == white_pixel) {
-			    angular_vel=(((400.00-j)/400.00)*1.0);
-			    ROS_INFO("i :%d ,j:%d",i,j);
-			    white_ball =true;
-			    break;
-        }}
-if (white_ball ==true) { break;}
-}
+	for (int i = 0; i < (img.height * img.step); i=i+3)
+    {
+        if (img.data[i] == white_pixel && 
+            img.data[i+1] == white_pixel && 
+            img.data[i+2] == white_pixel)
+        {
+            white_ball = true;
+		int pixel_width =(int(i/3) % img.width);
+		ROS_INFO("pixel:%d ",pixel_width);
+          	angular_vel= (((400.00-pixel_width)/400.00)*1.0);
+            break;
+        }
+    }
 
 	if (white_ball == true)
 	{
@@ -73,7 +76,7 @@ int main(int argc, char** argv)
     client = n.serviceClient<ball_chaser::drivetotarget>("/ball_chaser/command_robot");
 
     // Subscribe to /camera/rgb/image_raw topic to read the image data inside the process_image_callback function
-    ros::Subscriber sub1 = n.subscribe("/camera/rgb/image_raw", 10, process_image_callback);
+    ros::Subscriber sub1 = n.subscribe("/camera/rgb/image_raw", 1, process_image_callback);
 
     // Handle ROS communication events
     ros::spin();
